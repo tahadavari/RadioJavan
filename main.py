@@ -112,4 +112,12 @@ def crawl(rj_client: Client, last_song_id):
 
 
 def start():
+    if not os.path.exists(SONG_PATH_SAVE_MEMORY):
+        os.makedirs(SONG_PATH_SAVE_MEMORY)
+    if not os.path.exists(SONG_THUMBNAIL_PATH_SAVE_MEMORY):
+        os.makedirs(SONG_THUMBNAIL_PATH_SAVE_MEMORY)
+    if not os.path.exists(CSV_PATH_SAVE_MEMORY):
+        with open(CSV_PATH_SAVE_MEMORY, "w") as csv_file:
+            csv_file.write("id,song_path,thumbnail_path\n")
+
     crawl(client, LAST_SONG_ID)
