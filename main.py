@@ -1,6 +1,5 @@
 import os
 
-
 from radiojavanapi import Client
 import requests
 import uuid
@@ -9,7 +8,7 @@ import logging
 from botocore.exceptions import ClientError
 
 client = Client()
-CRAWL_COUNT = 120000
+CRAWL_COUNT = 50000
 LAST_SONG_ID = 500000
 SONG_PATH_SAVE_MEMORY = "/tmp/radiojavan/songs/"
 SONG_THUMBNAIL_PATH_SAVE_MEMORY = "/tmp/radiojavan/thumbnails/"
@@ -61,7 +60,8 @@ def download_from_link(link, path, ext):
 
 def crawl(rj_client: Client, last_song_id):
     i = 0
-    while i <= CRAWL_COUNT:
+    finish_upload = 0
+    while finish_upload <= CRAWL_COUNT:
         try:
             song = rj_client.get_song_by_id(last_song_id - i)
             if song.id in get_uploaded_ids():
@@ -79,7 +79,8 @@ def crawl(rj_client: Client, last_song_id):
             logging.info(f"song {song.id} downloading thumbnail")
             if song.thumbnail:
                 link_thumbnail = song.thumbnail
-            song_thumbnail_path = download_from_link(link_thumbnail, SONG_THUMBNAIL_PATH_SAVE_MEMORY, link.split('.')[-1])
+            song_thumbnail_path = download_from_link(link_thumbnail, SONG_THUMBNAIL_PATH_SAVE_MEMORY,
+                                                     link.split('.')[-1])
 
             # SAVE
             ## save song to object storage
@@ -93,7 +94,7 @@ def crawl(rj_client: Client, last_song_id):
             ## save song metadata to csv
             logging.info(f"song {song.id} save metadata")
             with open(CSV_PATH_SAVE_MEMORY, "a") as csv_file:
-                csv_file.write(f'{song.id},{song_path_os},{song_thumbnail_path_os}\n')
+                csv_file.write(f'{song.id},{song_path_os},{song_thumbnail_path_os},{song.artist}\n')
 
             # DELETE
             ## delete song
@@ -106,8 +107,10 @@ def crawl(rj_client: Client, last_song_id):
                 os.remove(song_thumbnail_path)
             i += 1
             logging.info(f"song {song.id} finished")
+            finish_upload += 1
         except:
             logging.error(f"song {song.id} failed")
+            i += 1
             continue
 
 
